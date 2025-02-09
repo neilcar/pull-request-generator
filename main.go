@@ -79,7 +79,14 @@ func main() {
 			return
 		}
 	}
-
+	// ensure cleanup of repo folder
+	defer func() {
+		dirRemovalErr := os.RemoveAll("./terragoat")
+		if dirRemovalErr != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Successfully removed directory.\n")
+	}
 	// Create and checkout new branch
 	w, err := repo.Worktree()
 	if err != nil {
@@ -102,6 +109,11 @@ func main() {
 	exampleFile := "./terragoat/example2.tf"
 	fmt.Printf("Creating file: %s\n", exampleFile)
 	content, err := os.ReadFile("new_resource.tf")
+	if err != nil {
+		fmt.Printf("Error opening file: %s\n", err)
+		return
+	}
+	defer content.Close()
 	err = os.WriteFile(exampleFile, content, 0644)
 	if err != nil {
 		fmt.Printf("Error creating file: %s\n", err)
@@ -173,12 +185,6 @@ func main() {
 
 	fmt.Printf("Successfully created PR #%d\n", pr.GetNumber())
 	fmt.Printf("PR URL: %s\n", pr.GetHTMLURL())
-
-	dirRemovalErr := os.RemoveAll("./terragoat")
-	if dirRemovalErr != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("Successfully removed directory.\n")
 }
 
 func GetCode(branchPrefix string, repoURL string, githubPersonalAccessToken string) (string, *git.Repository, *http.BasicAuth, error) {
